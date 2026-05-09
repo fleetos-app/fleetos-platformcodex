@@ -121,7 +121,7 @@ export async function getRunDetails(
 
   return {
     run: mapRunSummary(run),
-    stops: (run.run_stops ?? []).sort((a: any, b: any) => a.sequence - b.sequence),
+    stops: (run.stops ?? []).sort((a: any, b: any) => a.sequence - b.sequence),
     history: history.map(mapStatusHistory),
   };
 }
@@ -309,15 +309,15 @@ function mapJobSummary(row: any): JobSummary {
     temperatureMinC: row.temperature_min_c,
     temperatureMaxC: row.temperature_max_c,
     podRequired: row.pod_required,
-    customer: row.customers
+    customer: row.customer
       ? {
-          id: row.customers.id,
-          name: row.customers.name,
-          customerReference: row.customers.customer_reference,
+          id: row.customer.id,
+          name: row.customer.name,
+          customerReference: row.customer.customer_reference,
         }
       : undefined,
-    pickupLocation: mapLocation(row.pickup_locations),
-    deliveryLocation: mapLocation(row.delivery_locations),
+    pickupLocation: mapLocation(row.pickup_location),
+    deliveryLocation: mapLocation(row.delivery_location),
     createdAt: row.created_at,
   };
 }
@@ -338,7 +338,7 @@ function mapRunSummary(row: any): RunSummary {
     driverUserId: row.driver_user_id,
     subcontractorId: row.subcontractor_id,
     vehicleId: row.vehicle_id,
-    stopCount: row.run_stops?.length ?? 0,
+    stopCount: row.stops?.length ?? 0,
     createdAt: row.created_at,
   };
 }

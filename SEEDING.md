@@ -1,11 +1,17 @@
 # Seeding FleetOS Locally
 
-This seed is designed for beginners using the Supabase SQL Editor.
+This seed is designed for beginners using either `supabase db reset` locally or the Supabase SQL Editor.
 
-It assumes you already created this Supabase Auth user:
+It uses this demo Supabase Auth user:
 
 ```text
 admin@fleetos.local
+```
+
+If that user already exists, the seed uses the existing Auth user. If the user does not exist in a fresh local database, the seed creates it with this local-only password:
+
+```text
+Password123!
 ```
 
 The seed file is:
@@ -19,10 +25,12 @@ supabase/seed.sql
 - demo organization: `Jindal Transport`
 - default FleetOS roles
 - default FleetOS permissions
+- demo Auth user `admin@fleetos.local` when missing
 - owner membership for `admin@fleetos.local`
 - platform super admin access for `admin@fleetos.local`
 - sample customer
 - sample pickup and delivery locations
+- sample driver and subcontractor records
 - sample fleet vehicles
 - sample jobs
 - sample runs
@@ -40,9 +48,11 @@ supabase db reset
 
 If you are using a hosted Supabase project, apply the migration files in `supabase/migrations` before running the seed.
 
-## Step 2: Create The Auth User
+## Step 2: Create Or Confirm The Auth User
 
-In Supabase:
+For local development with `supabase db reset`, this step is automatic.
+
+If you are running the seed manually in a hosted Supabase SQL Editor, you can create the Auth user yourself first:
 
 1. Open your Supabase project.
 2. Go to `Authentication`.
@@ -63,13 +73,7 @@ In Supabase:
 6. Paste it into the SQL Editor.
 7. Click `Run`.
 
-If you see this error:
-
-```text
-Missing Supabase Auth user: admin@fleetos.local
-```
-
-Create the Auth user first, then run the seed again.
+The seed is idempotent, so it is safe to run again after fixing local setup issues.
 
 ## Step 4: Sign In
 
@@ -92,6 +96,12 @@ admin@fleetos.local
 ```
 
 Use the password you set when you created the Supabase Auth user.
+
+For a fresh local `supabase db reset` where the seed created the user, use:
+
+```text
+Password123!
+```
 
 After sign-in, the user should be able to access:
 

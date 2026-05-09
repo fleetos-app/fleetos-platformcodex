@@ -36,7 +36,7 @@ export async function queryJobs(
   let query = supabase
     .from("jobs")
     .select(
-      "id,title,status,customer_reference,internal_reference,requested_pickup_at,requested_delivery_at,temperature_min_c,temperature_max_c,pod_required,notes,created_at,customers(id,name,customer_reference),pickup_locations(id,name,suburb,state),delivery_locations(id,name,suburb,state)",
+      "id,title,status,customer_reference,internal_reference,requested_pickup_at,requested_delivery_at,temperature_min_c,temperature_max_c,pod_required,notes,created_at,customer:customers!jobs_customer_tenant_organization_fkey(id,name,customer_reference),pickup_location:pickup_locations!jobs_pickup_location_tenant_organization_fkey(id,name,suburb,state),delivery_location:delivery_locations!jobs_delivery_location_tenant_organization_fkey(id,name,suburb,state)",
       { count: "exact" },
     )
     .eq("tenant_id", scope.tenantId)
@@ -80,7 +80,10 @@ export async function queryRuns(
 
   let query = supabase
     .from("runs")
-    .select("id,run_number,title,status,planned_start_at,planned_end_at,driver_user_id,subcontractor_id,vehicle_id,notes,created_at,run_stops(id)", { count: "exact" })
+    .select(
+      "id,run_number,title,status,planned_start_at,planned_end_at,driver_user_id,subcontractor_id,vehicle_id,notes,created_at,stops:run_stops!run_stops_run_tenant_organization_fkey(id)",
+      { count: "exact" },
+    )
     .eq("tenant_id", scope.tenantId)
     .eq("organization_id", scope.organizationId);
 
@@ -116,7 +119,9 @@ export async function queryJobById(
 ) {
   const { data, error } = await supabase
     .from("jobs")
-    .select("*,customers(id,name,customer_reference),pickup_locations(id,name,suburb,state),delivery_locations(id,name,suburb,state)")
+    .select(
+      "*,customer:customers!jobs_customer_tenant_organization_fkey(id,name,customer_reference),pickup_location:pickup_locations!jobs_pickup_location_tenant_organization_fkey(id,name,suburb,state),delivery_location:delivery_locations!jobs_delivery_location_tenant_organization_fkey(id,name,suburb,state)",
+    )
     .eq("tenant_id", scope.tenantId)
     .eq("organization_id", scope.organizationId)
     .eq("id", jobId)
@@ -136,7 +141,7 @@ export async function queryRunById(
 ) {
   const { data, error } = await supabase
     .from("runs")
-    .select("*,run_stops(*)")
+    .select("*,stops:run_stops!run_stops_run_tenant_organization_fkey(*)")
     .eq("tenant_id", scope.tenantId)
     .eq("organization_id", scope.organizationId)
     .eq("id", runId)

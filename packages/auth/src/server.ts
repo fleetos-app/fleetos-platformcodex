@@ -1,6 +1,6 @@
 import type { FleetOSSupabaseClient } from "@fleetos/database";
 import {
-  assertPermission,
+  hasPermission,
   hasRole,
   isFleetOSRole,
   type FleetOSPermission,
@@ -13,13 +13,36 @@ import type {
   SensitiveAccessAuditInput,
 } from "./types.js";
 
+export class AuthenticationRequiredError extends Error {
+  constructor() {
+    super("Authentication required.");
+    this.name = "AuthenticationRequiredError";
+  }
+}
+
+export class OrganizationAccessRequiredError extends Error {
+  constructor() {
+    super("Organization membership required.");
+    this.name = "OrganizationAccessRequiredError";
+  }
+}
+
+export class PermissionDeniedError extends Error {
+  constructor(permission?: FleetOSPermission) {
+    super(permission ? `Missing required permission: ${permission}` : "Permission denied.");
+    this.name = "PermissionDeniedError";
+  }
+}
+
 export async function getOrganizationMemberships(
   supabase: FleetOSSupabaseClient,
   userId: string,
 ): Promise<OrganizationMembership[]> {
   const { data, error } = await supabase
     .from("organization_memberships")
-    .select("id, tenant_id, organization_id, user_id, role_key, status, organizations(id, name, slug, status)")
+    .select(
+      "id, tenant_id, organization_id, user_id, role_key, status, organization:organizations!organization_memberships_tenant_organization_fkey(id, name, slug, status)",
+    )
     .eq("user_id", userId)
     .eq("status", "active");
 
@@ -32,9 +55,9 @@ export async function getOrganizationMemberships(
       return [];
     }
 
-    const organization = Array.isArray(membership.organizations)
-      ? membership.organizations[0]
-      : membership.organizations;
+    const organization = Array.isArray(membership.organization)
+      ? membership.organization[0]
+      : membership.organization;
 
     if (!organization || organization.status !== "active") {
       return [];
@@ -68,26 +91,21 @@ export async function getAuthSession(
   supabase: FleetOSSupabaseClient,
   organizationId?: string,
 ): Promise<AuthSession | null> {
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getUser();
 
-  if (error) {
-    throw error;
-  }
-
-  if (!data.session?.user) {
+  if (error || !data.user) {
     return null;
   }
 
-  const memberships = await getOrganizationMemberships(supabase, data.session.user.id);
+  const memberships = await getOrganizationMemberships(supabase, data.user.id);
   const activeMembership = getActiveOrganizationMembership(memberships, organizationId);
 
   return {
     user: {
-      id: data.session.user.id,
-      email: data.session.user.email ?? "",
-      raw: data.session.user,
+      id: data.user.id,
+      email: data.user.email ?? "",
+      raw: data.user,
     },
-    session: data.session,
     memberships,
     activeMembership,
   };
@@ -100,7 +118,7 @@ export async function requireAuthSession(
   const session = await getAuthSession(supabase, organizationId);
 
   if (!session) {
-    throw new Error("Authentication required.");
+    throw new AuthenticationRequiredError();
   }
 
   return session;
@@ -113,8 +131,12 @@ export async function requireRole(
 ): Promise<AuthSession> {
   const session = await requireAuthSession(supabase, organizationId);
 
-  if (!session.activeMembership || !hasRole(session.activeMembership.role, allowedRoles)) {
-    throw new Error("Role access denied.");
+  if (!session.activeMembership) {
+    throw new OrganizationAccessRequiredError();
+  }
+
+  if (!hasRole(session.activeMembership.role, allowedRoles)) {
+    throw new PermissionDeniedError();
   }
 
   return session;
@@ -128,10 +150,13 @@ export async function requirePermission(
   const session = await requireAuthSession(supabase, organizationId);
 
   if (!session.activeMembership) {
-    throw new Error("Organization membership required.");
+    throw new OrganizationAccessRequiredError();
   }
 
-  assertPermission({ role: session.activeMembership.role }, permission);
+  if (!hasPermission({ role: session.activeMembership.role }, permission)) {
+    throw new PermissionDeniedError(permission);
+  }
+
   return session;
 }
 

@@ -1,5 +1,5 @@
 import type { FleetOSRole } from "@fleetos/rbac";
-import type { Session, User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 export interface AuthenticatedUser {
   id: string;
@@ -20,7 +20,6 @@ export interface OrganizationMembership {
 
 export interface AuthSession {
   user: AuthenticatedUser;
-  session: Session;
   memberships: OrganizationMembership[];
   activeMembership?: OrganizationMembership;
 }

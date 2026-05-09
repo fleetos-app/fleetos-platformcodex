@@ -65,7 +65,9 @@ export async function listTenantInfrastructure(serviceSupabase: ServiceClient) {
 export async function listOrganizationMemberships(serviceSupabase: ServiceClient) {
   const { data, error } = await serviceSupabase
     .from("organization_memberships")
-    .select("id,tenant_id,organization_id,user_id,role_key,status,organizations(name)")
+    .select(
+      "id,tenant_id,organization_id,user_id,role_key,status,organization:organizations!organization_memberships_tenant_organization_fkey(name)",
+    )
     .order("created_at", { ascending: false })
     .limit(250);
 

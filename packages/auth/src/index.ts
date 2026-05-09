@@ -12,11 +12,14 @@ export {
   type RouteGuardRule,
 } from "./guards.js";
 export {
+  AuthenticationRequiredError,
   getActiveOrganizationMembership,
   getAuthSession,
   getOrganizationMemberships,
   logAuthAuditEvent,
   logSensitiveAccess,
+  OrganizationAccessRequiredError,
+  PermissionDeniedError,
   requireAuthSession,
   requirePermission,
   requireRole,

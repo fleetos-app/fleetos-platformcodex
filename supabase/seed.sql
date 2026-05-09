@@ -1,14 +1,15 @@
 -- FleetOS local development seed
 --
--- Before running this file, create this user in Supabase Auth:
---   admin@fleetos.local
---
--- This script does not create Auth users. It looks up the existing
--- Supabase Auth user by email, then attaches that user to FleetOS data.
+-- This script uses admin@fleetos.local when it already exists in Supabase Auth.
+-- For a fresh local database reset, it creates that demo Auth user with:
+--   email: admin@fleetos.local
+--   password: Password123!
 
 do $$
 declare
   admin_user_id uuid;
+  seed_admin_user_id uuid := '10000000-0000-4000-8000-000000000001';
+  seed_admin_identity_id uuid := '10000000-0000-4000-8000-000000000002';
   demo_tenant_id uuid;
   demo_organization_id uuid;
   demo_customer_id uuid := '40000000-0000-4000-8000-000000000101';
@@ -20,6 +21,8 @@ declare
   demo_job_2_id uuid := '80000000-0000-4000-8000-000000000102';
   demo_vehicle_1_id uuid := 'b0000000-0000-4000-8000-000000000101';
   demo_vehicle_2_id uuid := 'b0000000-0000-4000-8000-000000000102';
+  demo_driver_id uuid := 'c0000000-0000-4000-8000-000000000101';
+  demo_subcontractor_id uuid := 'd0000000-0000-4000-8000-000000000101';
 begin
   select id
   into admin_user_id
@@ -28,8 +31,83 @@ begin
   limit 1;
 
   if admin_user_id is null then
-    raise exception 'Missing Supabase Auth user: admin@fleetos.local. Create the user in Authentication > Users, then run this seed again.';
+    admin_user_id := seed_admin_user_id;
+
+    insert into auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token,
+      email_change,
+      email_change_token_new,
+      recovery_token
+    )
+    values (
+      '00000000-0000-0000-0000-000000000000',
+      admin_user_id,
+      'authenticated',
+      'authenticated',
+      'admin@fleetos.local',
+      crypt('Password123!', gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"name":"FleetOS Admin"}'::jsonb,
+      now(),
+      now(),
+      '',
+      '',
+      '',
+      ''
+    )
+    on conflict (id) do update
+    set
+      email = excluded.email,
+      encrypted_password = excluded.encrypted_password,
+      email_confirmed_at = excluded.email_confirmed_at,
+      raw_app_meta_data = excluded.raw_app_meta_data,
+      raw_user_meta_data = excluded.raw_user_meta_data,
+      updated_at = excluded.updated_at;
+
   end if;
+
+  insert into auth.identities (
+    id,
+    user_id,
+    provider_id,
+    identity_data,
+    provider,
+    last_sign_in_at,
+    created_at,
+    updated_at
+  )
+  values (
+    seed_admin_identity_id,
+    admin_user_id,
+    'admin@fleetos.local',
+    jsonb_build_object(
+      'sub', admin_user_id::text,
+      'email', 'admin@fleetos.local',
+      'email_verified', true,
+      'phone_verified', false
+    ),
+    'email',
+    now(),
+    now(),
+    now()
+  )
+  on conflict (provider_id, provider) do update
+  set
+    user_id = excluded.user_id,
+    identity_data = excluded.identity_data,
+    updated_at = excluded.updated_at;
 
   -- Default platform roles.
   insert into public.roles (key, name, description, is_system)
@@ -203,6 +281,85 @@ begin
     tenant_id = excluded.tenant_id,
     role_key = excluded.role_key,
     status = excluded.status;
+
+  insert into public.drivers (
+    id,
+    tenant_id,
+    organization_id,
+    user_id,
+    display_name,
+    email,
+    phone,
+    license_number,
+    license_expiry_date,
+    status,
+    notes,
+    created_by,
+    updated_by
+  )
+  values (
+    demo_driver_id,
+    demo_tenant_id,
+    demo_organization_id,
+    admin_user_id,
+    'Admin Driver',
+    'admin@fleetos.local',
+    '+61 2 5550 3100',
+    'NSW-DEMO-001',
+    current_date + 540,
+    'active',
+    'Seed driver record linked to admin@fleetos.local for local testing.',
+    admin_user_id,
+    admin_user_id
+  )
+  on conflict (tenant_id, organization_id, user_id) do update
+  set
+    display_name = excluded.display_name,
+    email = excluded.email,
+    phone = excluded.phone,
+    license_number = excluded.license_number,
+    license_expiry_date = excluded.license_expiry_date,
+    status = excluded.status,
+    notes = excluded.notes,
+    updated_by = excluded.updated_by;
+
+  insert into public.subcontractors (
+    id,
+    tenant_id,
+    organization_id,
+    company_name,
+    contact_name,
+    email,
+    phone,
+    abn,
+    status,
+    notes,
+    created_by,
+    updated_by
+  )
+  values (
+    demo_subcontractor_id,
+    demo_tenant_id,
+    demo_organization_id,
+    'Jindal Partner Carriers',
+    'Partner Dispatch',
+    'dispatch@partner-carriers.example',
+    '+61 2 5550 3200',
+    '11111111111',
+    'active',
+    'Seed subcontractor for local allocation and outsourcing workflows.',
+    admin_user_id,
+    admin_user_id
+  )
+  on conflict (tenant_id, organization_id, company_name) do update
+  set
+    contact_name = excluded.contact_name,
+    email = excluded.email,
+    phone = excluded.phone,
+    abn = excluded.abn,
+    status = excluded.status,
+    notes = excluded.notes,
+    updated_by = excluded.updated_by;
 
   -- Give the same user FleetOS internal super-admin access.
   insert into public.platform_super_admins (user_id, email, status)

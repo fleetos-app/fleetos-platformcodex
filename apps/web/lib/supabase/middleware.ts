@@ -9,7 +9,14 @@ type CookieToSet = {
 };
 
 export function createMiddlewareSupabaseClient(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-fleetos-pathname", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+
+  let response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   const supabase = createServerClient<FleetOSDatabase>(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",

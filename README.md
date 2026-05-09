@@ -26,6 +26,7 @@ FleetOS is a modular SaaS foundation for transport operators, refrigerated logis
 - `packages/ui` - reusable UI primitives
 - `supabase/migrations` - database migrations
 - `supabase/seed.sql` - local demo seed data
+- `DATABASE.md` - schema relationships and fresh database setup
 - `docs` - architecture and operating decisions
 
 ## Setup
@@ -50,6 +51,8 @@ Apply migrations and seed locally:
 supabase db reset
 ```
 
+Docker Desktop must be running for the Supabase local stack.
+
 Run the app:
 
 ```bash
@@ -59,8 +62,9 @@ corepack pnpm dev
 Demo user after seeding:
 
 - `admin@fleetos.local`
+- local reset password: `Password123!`
 
-Create this user in Supabase Auth first, choose a local password, then run [supabase/seed.sql](supabase/seed.sql) in the SQL Editor. See [SEEDING.md](SEEDING.md).
+The seed uses `admin@fleetos.local` if it already exists, or creates it for a fresh local reset. For SQL Editor setup and hosted Supabase notes, see [SEEDING.md](SEEDING.md). For schema relationships, see [DATABASE.md](DATABASE.md).
 
 ## Quality Gates
 

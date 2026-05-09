@@ -20,7 +20,13 @@ export async function LoginScreen({
   const next = readParam(params.next) ?? defaultNext;
   const safeRedirect = next.startsWith("/") && !next.startsWith("//") ? next : defaultNext;
   const supabase = await createServerSupabaseClient();
-  const session = await getAuthSession(supabase);
+  let session = null;
+
+  try {
+    session = await getAuthSession(supabase);
+  } catch (error) {
+    console.error("FleetOS login session check failed", error);
+  }
 
   if (session) {
     redirect(safeRedirect);

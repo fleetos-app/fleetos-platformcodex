@@ -6,10 +6,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { supabase, response } = createMiddlewareSupabaseClient(request);
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (isProtectedPath(pathname) && !session) {
+  if (isProtectedPath(pathname) && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/login" || pathname.startsWith("/login/")) {
-    if (!session) {
+    if (!user) {
       return response;
     }
 

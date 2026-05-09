@@ -5,10 +5,14 @@ import { createServerSupabaseClient } from "../../../lib/supabase/server";
 export async function POST(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const supabase = await createServerSupabaseClient();
-  const session = await getAuthSession(supabase);
 
-  if (session) {
-    await logSensitiveAccess(supabase, session, "auth.sessions", undefined, "auth.logout");
+  try {
+    const session = await getAuthSession(supabase);
+    if (session) {
+      await logSensitiveAccess(supabase, session, "auth.sessions", undefined, "auth.logout");
+    }
+  } catch (error) {
+    console.error("FleetOS logout audit failed", error);
   }
 
   await supabase.auth.signOut();

@@ -10,10 +10,10 @@ export async function requireSuperAdmin(): Promise<{
 }> {
   const userSupabase = await createServerSupabaseClient();
   const {
-    data: { session },
-  } = await userSupabase.auth.getSession();
+    data: { user },
+  } = await userSupabase.auth.getUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login?next=/admin/organizations");
   }
 
@@ -21,7 +21,7 @@ export async function requireSuperAdmin(): Promise<{
   const { data, error } = await serviceSupabase
     .from("platform_super_admins")
     .select("id,user_id,email,status")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .maybeSingle();
 
   if (error || !data || !isActiveSuperAdminRecord(data)) {
@@ -31,8 +31,8 @@ export async function requireSuperAdmin(): Promise<{
   return {
     serviceSupabase,
     context: {
-      userId: session.user.id,
-      email: session.user.email ?? data.email,
+      userId: user.id,
+      email: user.email ?? data.email,
       superAdminId: data.id,
     },
   };
