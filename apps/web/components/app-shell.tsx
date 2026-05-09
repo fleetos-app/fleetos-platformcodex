@@ -29,6 +29,7 @@ const moduleIcons: Record<AppModuleKey, LucideIcon> = {
   drivers: UserRound,
   subcontractors: UsersRound,
   jobs: BriefcaseBusiness,
+  runs: ClipboardCheck,
   pods: FileCheck2,
   invoices: ReceiptText,
   compliance: ShieldCheck,

@@ -1,11 +1,11 @@
 import { CreateEditDialog, PlaceholderFormFields } from "../../../../modules/jobs-runs/components/create-edit-dialog";
-import { JobsTable } from "../../../../modules/jobs-runs/components/jobs-table";
 import { ModuleToolbar } from "../../../../modules/jobs-runs/components/module-toolbar";
-import { listJobs } from "../../../../modules/jobs-runs/services/jobs-runs-service";
-import { jobStatuses, type JobStatus } from "../../../../modules/jobs-runs/types";
+import { RunsTable } from "../../../../modules/jobs-runs/components/runs-table";
+import { listRuns } from "../../../../modules/jobs-runs/services/jobs-runs-service";
 import { getJobsRunsServerContext } from "../../../../modules/jobs-runs/server";
+import { runStatuses, type RunStatus } from "../../../../modules/jobs-runs/types";
 
-export default async function JobsPage({
+export default async function RunsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -16,9 +16,9 @@ export default async function JobsPage({
   const status = readParam(params.status);
   const page = Number(readParam(params.page) ?? 1);
 
-  const result = await listJobs(supabase, scope, {
+  const result = await listRuns(supabase, scope, {
     search,
-    status: isKnownJobStatus(status) ? status : "all",
+    status: isKnownRunStatus(status) ? status : "all",
     page,
     pageSize: 25,
   });
@@ -28,25 +28,25 @@ export default async function JobsPage({
       <header className="module-header split-header">
         <div>
           <p className="module-eyebrow">Operations</p>
-          <h1>Jobs</h1>
-          <p>Customer transport jobs with allocation, timing, temperature, and POD-ready structure.</p>
+          <h1>Runs</h1>
+          <p>Multi-stop run planning with driver, subcontractor, vehicle, and status lifecycle foundations.</p>
         </div>
         <CreateEditDialog
-          title="Create job"
+          title="Create run"
           description="This dialog defines the future create/edit shape. Persistence is handled through services."
         >
-          <PlaceholderFormFields mode="job" />
+          <PlaceholderFormFields mode="run" />
         </CreateEditDialog>
       </header>
-      <form action="/app/jobs">
+      <form action="/app/runs">
         <ModuleToolbar
           search={search}
           status={status}
-          statuses={jobStatuses}
-          createLabel="New job"
+          statuses={runStatuses}
+          createLabel="New run"
         />
       </form>
-      <JobsTable result={result} />
+      <RunsTable result={result} />
     </div>
   );
 }
@@ -55,6 +55,6 @@ function readParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function isKnownJobStatus(value?: string): value is JobStatus {
-  return Boolean(value && jobStatuses.includes(value as JobStatus));
+function isKnownRunStatus(value?: string): value is RunStatus {
+  return Boolean(value && runStatuses.includes(value as RunStatus));
 }
