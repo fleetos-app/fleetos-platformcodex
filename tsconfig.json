@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/config" },
+    { "path": "./packages/database" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/rbac" },
+    { "path": "./packages/tenant-router" },
+    { "path": "./packages/ui" },
+    { "path": "./apps/web" }
+  ]
+}

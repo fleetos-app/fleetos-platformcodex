@@ -1,0 +1,30 @@
+{
+  "name": "@fleetos/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf .next"
+  },
+  "dependencies": {
+    "@fleetos/auth": "workspace:*",
+    "@fleetos/database": "workspace:*",
+    "@fleetos/rbac": "workspace:*",
+    "@fleetos/tenant-router": "workspace:*",
+    "@fleetos/ui": "workspace:*",
+    "next": "^15.3.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  }
+}
