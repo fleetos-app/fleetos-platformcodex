@@ -19,7 +19,7 @@ export async function getOrganizationMemberships(
 ): Promise<OrganizationMembership[]> {
   const { data, error } = await supabase
     .from("organization_memberships")
-    .select("id, tenant_id, organization_id, user_id, role_key, status")
+    .select("id, tenant_id, organization_id, user_id, role_key, status, organizations(id, name, slug, status)")
     .eq("user_id", userId)
     .eq("status", "active");
 
@@ -32,10 +32,20 @@ export async function getOrganizationMemberships(
       return [];
     }
 
+    const organization = Array.isArray(membership.organizations)
+      ? membership.organizations[0]
+      : membership.organizations;
+
+    if (!organization || organization.status !== "active") {
+      return [];
+    }
+
     return {
       id: membership.id,
       tenantId: membership.tenant_id,
       organizationId: membership.organization_id,
+      organizationName: organization.name,
+      organizationSlug: organization.slug,
       userId: membership.user_id,
       role: membership.role_key,
       status: membership.status,

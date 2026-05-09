@@ -1,5 +1,6 @@
-import { CreateEditDialog, PlaceholderFormFields } from "../../../../modules/jobs-runs/components/create-edit-dialog";
+import { CreateEditDialog } from "../../../../modules/jobs-runs/components/create-edit-dialog";
 import { ModuleToolbar } from "../../../../modules/jobs-runs/components/module-toolbar";
+import { RunForm } from "../../../../modules/jobs-runs/components/run-form";
 import { RunsTable } from "../../../../modules/jobs-runs/components/runs-table";
 import { listRuns } from "../../../../modules/jobs-runs/services/jobs-runs-service";
 import { getJobsRunsServerContext } from "../../../../modules/jobs-runs/server";
@@ -11,7 +12,7 @@ export default async function RunsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const { supabase, scope } = await getJobsRunsServerContext();
+  const { supabase, scope } = await getJobsRunsServerContext("runs.read");
   const search = readParam(params.search);
   const status = readParam(params.status);
   const page = Number(readParam(params.page) ?? 1);
@@ -33,9 +34,9 @@ export default async function RunsPage({
         </div>
         <CreateEditDialog
           title="Create run"
-          description="This dialog defines the future create/edit shape. Persistence is handled through services."
+          description="Create a multi-stop-ready run with dispatch, driver, subcontractor, and vehicle assignment fields."
         >
-          <PlaceholderFormFields mode="run" />
+          <RunForm mode="create" />
         </CreateEditDialog>
       </header>
       <form action="/app/runs">

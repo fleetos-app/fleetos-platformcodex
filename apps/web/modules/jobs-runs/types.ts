@@ -61,6 +61,11 @@ export interface CustomerSummary {
   customerReference: string | null;
 }
 
+export interface SelectOption {
+  id: string;
+  label: string;
+}
+
 export interface LocationSummary {
   id: string;
   name: string;
@@ -76,6 +81,7 @@ export interface JobSummary {
   internalReference: string | null;
   requestedPickupAt: string | null;
   requestedDeliveryAt: string | null;
+  notes: string | null;
   temperatureMinC: number | null;
   temperatureMaxC: number | null;
   podRequired: boolean;
@@ -92,6 +98,7 @@ export interface RunSummary {
   status: RunStatus;
   plannedStartAt: string | null;
   plannedEndAt: string | null;
+  notes: string | null;
   driverUserId: string | null;
   subcontractorId: string | null;
   vehicleId: string | null;
@@ -134,6 +141,15 @@ export interface CreateJobInput {
   temperatureMinC?: number | null;
   temperatureMaxC?: number | null;
   podRequired?: boolean;
+  runId?: string | null;
+  driverUserId?: string | null;
+  subcontractorId?: string | null;
+  vehicleId?: string | null;
+}
+
+export interface UpdateJobInput extends Partial<CreateJobInput> {
+  id: string;
+  status?: JobStatus;
 }
 
 export interface CreateRunInput {
@@ -145,4 +161,9 @@ export interface CreateRunInput {
   subcontractorId?: string | null;
   vehicleId?: string | null;
   notes?: string | null;
+}
+
+export interface UpdateRunInput extends Partial<CreateRunInput> {
+  id: string;
+  status?: RunStatus;
 }

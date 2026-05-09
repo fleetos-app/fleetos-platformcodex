@@ -32,6 +32,9 @@ importers:
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.105.4)
+      '@supabase/supabase-js':
+        specifier: ^2.49.4
+        version: 2.105.4
       lucide-react:
         specifier: ^1.14.0
         version: 1.14.0(react@19.2.6)

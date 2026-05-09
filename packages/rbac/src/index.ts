@@ -24,6 +24,11 @@ export const fleetOSPermissions = [
   "jobs.write",
   "runs.read",
   "runs.write",
+  "vehicles.read",
+  "vehicles.write",
+  "users.read",
+  "users.write",
+  "control_tower.read",
 ] as const;
 
 export type FleetOSPermission = (typeof fleetOSPermissions)[number];
@@ -53,6 +58,10 @@ export const rolePermissions: Record<FleetOSRole, readonly FleetOSPermission[]> 
     "jobs.write",
     "runs.read",
     "runs.write",
+    "vehicles.read",
+    "vehicles.write",
+    "users.read",
+    "control_tower.read",
   ],
   accounts: [
     "tenant.read",
@@ -62,10 +71,10 @@ export const rolePermissions: Record<FleetOSRole, readonly FleetOSPermission[]> 
     "jobs.read",
     "runs.read",
   ],
-  driver: ["tenant.read", "organization.read", "audit_log.create", "jobs.read", "runs.read"],
+  driver: ["tenant.read", "organization.read", "audit_log.create", "jobs.read", "runs.read", "vehicles.read"],
   subcontractor: ["tenant.read", "organization.read", "audit_log.create", "jobs.read", "runs.read"],
   client: ["tenant.read", "organization.read", "jobs.read"],
-  mechanic: ["tenant.read", "organization.read", "audit_log.create", "jobs.read", "runs.read"],
+  mechanic: ["tenant.read", "organization.read", "audit_log.create", "jobs.read", "runs.read", "vehicles.read", "vehicles.write"],
 };
 
 export function isFleetOSRole(value: string): value is FleetOSRole {

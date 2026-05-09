@@ -2,13 +2,21 @@
   "extends": "../../packages/config/tsconfig/base.json",
   "compilerOptions": {
     "allowJs": true,
+    "baseUrl": ".",
     "incremental": true,
     "jsx": "preserve",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "plugins": [{ "name": "next" }],
-    "tsBuildInfoFile": ".next/cache/tsconfig.tsbuildinfo"
+    "tsBuildInfoFile": ".next/cache/tsconfig.tsbuildinfo",
+    "paths": {
+      "@fleetos/auth": ["../../packages/auth/src/index.ts"],
+      "@fleetos/database": ["../../packages/database/src/index.ts"],
+      "@fleetos/rbac": ["../../packages/rbac/src/index.ts"],
+      "@fleetos/tenant-router": ["../../packages/tenant-router/src/index.ts"],
+      "@fleetos/ui": ["../../packages/ui/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",

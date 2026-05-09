@@ -9,12 +9,7 @@ export interface RouteGuardRule {
 
 export const protectedRouteRules: readonly RouteGuardRule[] = [
   { pathPrefix: "/app" },
-  { pathPrefix: "/admin", roles: ["owner", "admin"] },
-  {
-    pathPrefix: "/settings/security",
-    permissions: ["sensitive_access.read"],
-    auditSensitiveAccess: true,
-  },
+  { pathPrefix: "/admin" },
 ];
 
 export function findRouteGuardRule(

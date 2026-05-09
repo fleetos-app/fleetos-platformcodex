@@ -1,7 +1,8 @@
-import { CreateEditDialog, PlaceholderFormFields } from "../../../../modules/jobs-runs/components/create-edit-dialog";
+import { CreateEditDialog } from "../../../../modules/jobs-runs/components/create-edit-dialog";
+import { JobForm } from "../../../../modules/jobs-runs/components/job-form";
 import { JobsTable } from "../../../../modules/jobs-runs/components/jobs-table";
 import { ModuleToolbar } from "../../../../modules/jobs-runs/components/module-toolbar";
-import { listJobs } from "../../../../modules/jobs-runs/services/jobs-runs-service";
+import { getJobFormOptions, listJobs } from "../../../../modules/jobs-runs/services/jobs-runs-service";
 import { jobStatuses, type JobStatus } from "../../../../modules/jobs-runs/types";
 import { getJobsRunsServerContext } from "../../../../modules/jobs-runs/server";
 
@@ -11,17 +12,20 @@ export default async function JobsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const { supabase, scope } = await getJobsRunsServerContext();
+  const { supabase, scope } = await getJobsRunsServerContext("jobs.read");
   const search = readParam(params.search);
   const status = readParam(params.status);
   const page = Number(readParam(params.page) ?? 1);
 
-  const result = await listJobs(supabase, scope, {
-    search,
-    status: isKnownJobStatus(status) ? status : "all",
-    page,
-    pageSize: 25,
-  });
+  const [result, options] = await Promise.all([
+    listJobs(supabase, scope, {
+      search,
+      status: isKnownJobStatus(status) ? status : "all",
+      page,
+      pageSize: 25,
+    }),
+    getJobFormOptions(supabase, scope),
+  ]);
 
   return (
     <div className="module-page">
@@ -33,9 +37,9 @@ export default async function JobsPage({
         </div>
         <CreateEditDialog
           title="Create job"
-          description="This dialog defines the future create/edit shape. Persistence is handled through services."
+          description="Create a tenant-scoped transport job with references, time windows, temperature fields, and allocation."
         >
-          <PlaceholderFormFields mode="job" />
+          <JobForm mode="create" options={options} />
         </CreateEditDialog>
       </header>
       <form action="/app/jobs">

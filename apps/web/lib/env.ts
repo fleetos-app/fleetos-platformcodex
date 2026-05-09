@@ -14,3 +14,10 @@ export function getSupabaseBrowserEnv() {
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "local-development-anon-key",
   };
 }
+
+export function getSupabaseServiceEnv() {
+  return {
+    url: requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    serviceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+  };
+}

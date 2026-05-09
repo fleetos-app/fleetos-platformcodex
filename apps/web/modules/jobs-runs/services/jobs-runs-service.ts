@@ -4,11 +4,18 @@ import {
   insertJob,
   insertRun,
   insertStatusHistory,
+  queryCustomers,
+  queryDeliveryLocations,
   queryJobById,
   queryJobs,
+  queryPickupLocations,
   queryRunById,
+  queryRunOptions,
   queryRuns,
   queryStatusHistory,
+  updateJob as updateJobRecord,
+  updateRun as updateRunRecord,
+  upsertAllocation,
 } from "../repositories/jobs-runs-repository";
 import { isJobStatus, isRunStatus } from "../status";
 import type {
@@ -22,7 +29,10 @@ import type {
   RunListFilters,
   RunStatus,
   RunSummary,
+  SelectOption,
   StatusHistoryEntry,
+  UpdateJobInput,
+  UpdateRunInput,
 } from "../types";
 
 export function createOperationalScope(input: {
@@ -123,6 +133,13 @@ export async function createJob(
 ) {
   validateTemperatureRange(input.temperatureMinC, input.temperatureMaxC);
   const job = await insertJob(supabase, scope, input);
+  await upsertAllocation(supabase, scope, {
+    jobId: job.id,
+    runId: input.runId,
+    driverUserId: input.driverUserId,
+    subcontractorId: input.subcontractorId,
+    vehicleId: input.vehicleId,
+  });
 
   await Promise.all([
     insertStatusHistory(supabase, scope, {
@@ -141,6 +158,46 @@ export async function createJob(
       metadata: { operation: "job.create" },
     }),
   ]);
+
+  return job;
+}
+
+export async function updateJob(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+  input: UpdateJobInput,
+) {
+  validateTemperatureRange(input.temperatureMinC, input.temperatureMaxC);
+  const existing = await queryJobById(supabase, scope, input.id);
+  const job = await updateJobRecord(supabase, scope, input);
+
+  await upsertAllocation(supabase, scope, {
+    jobId: input.id,
+    runId: input.runId,
+    driverUserId: input.driverUserId,
+    subcontractorId: input.subcontractorId,
+    vehicleId: input.vehicleId,
+  });
+
+  if (input.status && existing.status !== input.status) {
+    await insertStatusHistory(supabase, scope, {
+      entityType: "job",
+      entityId: input.id,
+      fromStatus: existing.status,
+      toStatus: input.status,
+      reason: "Job updated",
+    });
+  }
+
+  await logAuthAuditEvent(supabase, {
+    tenantId: scope.tenantId,
+    organizationId: scope.organizationId,
+    actorUserId: scope.actorUserId,
+    action: "auth.sensitive_access",
+    entityTable: "jobs",
+    entityId: input.id,
+    metadata: { operation: "job.update" },
+  });
 
   return job;
 }
@@ -173,6 +230,68 @@ export async function createRun(
   return run;
 }
 
+export async function updateRun(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+  input: UpdateRunInput,
+) {
+  const existing = await queryRunById(supabase, scope, input.id);
+  const run = await updateRunRecord(supabase, scope, input);
+
+  if (input.status && existing.status !== input.status) {
+    await insertStatusHistory(supabase, scope, {
+      entityType: "run",
+      entityId: input.id,
+      fromStatus: existing.status,
+      toStatus: input.status,
+      reason: "Run updated",
+    });
+  }
+
+  await logAuthAuditEvent(supabase, {
+    tenantId: scope.tenantId,
+    organizationId: scope.organizationId,
+    actorUserId: scope.actorUserId,
+    action: "auth.sensitive_access",
+    entityTable: "runs",
+    entityId: input.id,
+    metadata: { operation: "run.update" },
+  });
+
+  return run;
+}
+
+export async function getJobFormOptions(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+) {
+  const [customers, pickupLocations, deliveryLocations, runs] = await Promise.all([
+    queryCustomers(supabase, scope),
+    queryPickupLocations(supabase, scope),
+    queryDeliveryLocations(supabase, scope),
+    queryRunOptions(supabase, scope),
+  ]);
+
+  return {
+    customers: customers.map((row: any): SelectOption => ({
+      id: row.id,
+      label: row.customer_reference ? `${row.name} (${row.customer_reference})` : row.name,
+    })),
+    pickupLocations: pickupLocations.map((row: any): SelectOption => ({
+      id: row.id,
+      label: [row.name, row.suburb, row.state].filter(Boolean).join(", "),
+    })),
+    deliveryLocations: deliveryLocations.map((row: any): SelectOption => ({
+      id: row.id,
+      label: [row.name, row.suburb, row.state].filter(Boolean).join(", "),
+    })),
+    runs: runs.map((row: any): SelectOption => ({
+      id: row.id,
+      label: `${row.run_number} - ${row.title}`,
+    })),
+  };
+}
+
 function mapJobSummary(row: any): JobSummary {
   if (!isJobStatus(row.status)) {
     throw new Error(`Unknown job status: ${row.status}`);
@@ -186,6 +305,7 @@ function mapJobSummary(row: any): JobSummary {
     internalReference: row.internal_reference,
     requestedPickupAt: row.requested_pickup_at,
     requestedDeliveryAt: row.requested_delivery_at,
+    notes: row.notes,
     temperatureMinC: row.temperature_min_c,
     temperatureMaxC: row.temperature_max_c,
     podRequired: row.pod_required,
@@ -214,6 +334,7 @@ function mapRunSummary(row: any): RunSummary {
     status: row.status,
     plannedStartAt: row.planned_start_at,
     plannedEndAt: row.planned_end_at,
+    notes: row.notes,
     driverUserId: row.driver_user_id,
     subcontractorId: row.subcontractor_id,
     vehicleId: row.vehicle_id,

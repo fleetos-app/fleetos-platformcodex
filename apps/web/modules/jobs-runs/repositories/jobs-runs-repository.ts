@@ -8,6 +8,8 @@ import type {
   PaginatedResult,
   RunListFilters,
   RunStatus,
+  UpdateJobInput,
+  UpdateRunInput,
 } from "../types";
 
 function paginationRange(page = 1, pageSize = 25) {
@@ -34,7 +36,7 @@ export async function queryJobs(
   let query = supabase
     .from("jobs")
     .select(
-      "id,title,status,customer_reference,internal_reference,requested_pickup_at,requested_delivery_at,temperature_min_c,temperature_max_c,pod_required,created_at,customers(id,name,customer_reference),pickup_locations(id,name,suburb,state),delivery_locations(id,name,suburb,state)",
+      "id,title,status,customer_reference,internal_reference,requested_pickup_at,requested_delivery_at,temperature_min_c,temperature_max_c,pod_required,notes,created_at,customers(id,name,customer_reference),pickup_locations(id,name,suburb,state),delivery_locations(id,name,suburb,state)",
       { count: "exact" },
     )
     .eq("tenant_id", scope.tenantId)
@@ -78,7 +80,7 @@ export async function queryRuns(
 
   let query = supabase
     .from("runs")
-    .select("id,run_number,title,status,planned_start_at,planned_end_at,driver_user_id,subcontractor_id,vehicle_id,created_at,run_stops(id)", { count: "exact" })
+    .select("id,run_number,title,status,planned_start_at,planned_end_at,driver_user_id,subcontractor_id,vehicle_id,notes,created_at,run_stops(id)", { count: "exact" })
     .eq("tenant_id", scope.tenantId)
     .eq("organization_id", scope.organizationId);
 
@@ -182,6 +184,45 @@ export async function insertJob(
   return data;
 }
 
+export async function updateJob(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+  input: UpdateJobInput,
+) {
+  const patch: Record<string, unknown> = {
+    updated_by: scope.actorUserId,
+  };
+
+  if (input.customerId !== undefined) patch.customer_id = input.customerId;
+  if (input.pickupLocationId !== undefined) patch.pickup_location_id = input.pickupLocationId;
+  if (input.deliveryLocationId !== undefined) patch.delivery_location_id = input.deliveryLocationId;
+  if (input.title !== undefined) patch.title = input.title;
+  if (input.status !== undefined) patch.status = input.status;
+  if (input.customerReference !== undefined) patch.customer_reference = input.customerReference;
+  if (input.internalReference !== undefined) patch.internal_reference = input.internalReference;
+  if (input.notes !== undefined) patch.notes = input.notes;
+  if (input.requestedPickupAt !== undefined) patch.requested_pickup_at = input.requestedPickupAt;
+  if (input.requestedDeliveryAt !== undefined) patch.requested_delivery_at = input.requestedDeliveryAt;
+  if (input.temperatureMinC !== undefined) patch.temperature_min_c = input.temperatureMinC;
+  if (input.temperatureMaxC !== undefined) patch.temperature_max_c = input.temperatureMaxC;
+  if (input.podRequired !== undefined) patch.pod_required = input.podRequired;
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .update(patch)
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .eq("id", input.id)
+    .select("id,status")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function insertRun(
   supabase: FleetOSSupabaseClient,
   scope: OperationalScope,
@@ -211,6 +252,73 @@ export async function insertRun(
   }
 
   return data;
+}
+
+export async function updateRun(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+  input: UpdateRunInput,
+) {
+  const patch: Record<string, unknown> = {
+    updated_by: scope.actorUserId,
+  };
+
+  if (input.runNumber !== undefined) patch.run_number = input.runNumber;
+  if (input.title !== undefined) patch.title = input.title;
+  if (input.status !== undefined) patch.status = input.status;
+  if (input.plannedStartAt !== undefined) patch.planned_start_at = input.plannedStartAt;
+  if (input.plannedEndAt !== undefined) patch.planned_end_at = input.plannedEndAt;
+  if (input.driverUserId !== undefined) patch.driver_user_id = input.driverUserId;
+  if (input.subcontractorId !== undefined) patch.subcontractor_id = input.subcontractorId;
+  if (input.vehicleId !== undefined) patch.vehicle_id = input.vehicleId;
+  if (input.notes !== undefined) patch.notes = input.notes;
+
+  const { data, error } = await supabase
+    .from("runs")
+    .update(patch)
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .eq("id", input.id)
+    .select("id,status")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function upsertAllocation(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+  input: {
+    jobId: string;
+    runId?: string | null;
+    driverUserId?: string | null;
+    subcontractorId?: string | null;
+    vehicleId?: string | null;
+  },
+) {
+  if (!input.runId && !input.driverUserId && !input.subcontractorId && !input.vehicleId) {
+    return;
+  }
+
+  const { error } = await supabase.from("allocations").insert({
+    tenant_id: scope.tenantId,
+    organization_id: scope.organizationId,
+    job_id: input.jobId,
+    run_id: input.runId ?? null,
+    driver_user_id: input.driverUserId ?? null,
+    subcontractor_id: input.subcontractorId ?? null,
+    vehicle_id: input.vehicleId ?? null,
+    created_by: scope.actorUserId,
+    updated_by: scope.actorUserId,
+  });
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function insertStatusHistory(
@@ -259,5 +367,57 @@ export async function queryStatusHistory(
     throw error;
   }
 
+  return data ?? [];
+}
+
+export async function queryCustomers(supabase: FleetOSSupabaseClient, scope: OperationalScope) {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("id,name,customer_reference")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .order("name", { ascending: true })
+    .limit(100);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function queryPickupLocations(supabase: FleetOSSupabaseClient, scope: OperationalScope) {
+  const { data, error } = await supabase
+    .from("pickup_locations")
+    .select("id,name,suburb,state")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .order("name", { ascending: true })
+    .limit(100);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function queryDeliveryLocations(supabase: FleetOSSupabaseClient, scope: OperationalScope) {
+  const { data, error } = await supabase
+    .from("delivery_locations")
+    .select("id,name,suburb,state")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .order("name", { ascending: true })
+    .limit(100);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function queryRunOptions(supabase: FleetOSSupabaseClient, scope: OperationalScope) {
+  const { data, error } = await supabase
+    .from("runs")
+    .select("id,run_number,title")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) throw error;
   return data ?? [];
 }

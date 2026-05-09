@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { StatusBadge } from "../../../../../modules/jobs-runs/components/status-badge";
 import { StatusTimeline } from "../../../../../modules/jobs-runs/components/timeline";
+import { CreateEditDialog } from "../../../../../modules/jobs-runs/components/create-edit-dialog";
+import { RunForm } from "../../../../../modules/jobs-runs/components/run-form";
 import { getRunDetails } from "../../../../../modules/jobs-runs/services/jobs-runs-service";
 import { getJobsRunsServerContext } from "../../../../../modules/jobs-runs/server";
 
@@ -10,7 +12,7 @@ export default async function RunDetailsPage({
   params: Promise<{ runId: string }>;
 }) {
   const { runId } = await params;
-  const { supabase, scope } = await getJobsRunsServerContext();
+  const { supabase, scope } = await getJobsRunsServerContext("runs.read");
 
   try {
     const { run, stops, history } = await getRunDetails(supabase, scope, runId);
@@ -23,7 +25,12 @@ export default async function RunDetailsPage({
             <h1>{run.runNumber}</h1>
             <p>{run.title}</p>
           </div>
-          <StatusBadge status={run.status} />
+          <div className="header-actions">
+            <StatusBadge status={run.status} />
+            <CreateEditDialog title="Edit run" description="Update run details through the service layer.">
+              <RunForm mode="edit" run={run} />
+            </CreateEditDialog>
+          </div>
         </header>
         <section className="detail-grid">
           <Detail label="Driver" value={run.driverUserId ?? "Unassigned"} />

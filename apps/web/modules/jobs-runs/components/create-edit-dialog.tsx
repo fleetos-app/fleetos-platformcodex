@@ -13,7 +13,7 @@ export function CreateEditDialog({
       <div className="dialog-panel">
         <h2>{title}</h2>
         <p>{description}</p>
-        <form className="dialog-form">{children}</form>
+        {children}
       </div>
     </details>
   );

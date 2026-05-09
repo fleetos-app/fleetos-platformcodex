@@ -11,6 +11,8 @@ export interface OrganizationMembership {
   id: string;
   tenantId: string;
   organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
   userId: string;
   role: FleetOSRole;
   status: "active" | "invited" | "suspended" | "removed";

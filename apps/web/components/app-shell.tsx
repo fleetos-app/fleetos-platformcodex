@@ -3,16 +3,12 @@
 import type { AuthSession } from "@fleetos/auth";
 import { hasPermission } from "@fleetos/rbac";
 import {
-  BarChart3,
   BriefcaseBusiness,
   ClipboardCheck,
-  FileCheck2,
   Gauge,
   Menu,
-  ReceiptText,
-  ShieldCheck,
+  RadioTower,
   Truck,
-  UserRound,
   UsersRound,
   Wrench,
   type LucideIcon,
@@ -25,15 +21,11 @@ import { ThemeToggle } from "./theme-toggle";
 
 const moduleIcons: Record<AppModuleKey, LucideIcon> = {
   dashboard: Gauge,
-  fleet: Truck,
-  drivers: UserRound,
-  subcontractors: UsersRound,
+  control_tower: RadioTower,
   jobs: BriefcaseBusiness,
   runs: ClipboardCheck,
-  pods: FileCheck2,
-  invoices: ReceiptText,
-  compliance: ShieldCheck,
-  reports: BarChart3,
+  fleet: Truck,
+  users: UsersRound,
   settings: Wrench,
 };
 
@@ -114,14 +106,20 @@ export function AppShell({
 
           <label className="org-switcher">
             <span>Organization</span>
-            <select defaultValue={activeMembership?.organizationId ?? ""} aria-label="Switch organization">
-              {organizations.length === 0 ? <option value="">No organization</option> : null}
-              {organizations.map((membership) => (
-                <option key={membership.id} value={membership.organizationId}>
-                  {membership.organizationId.slice(0, 8)} · {membership.role}
-                </option>
-              ))}
-            </select>
+            <form action="/app/switch-organization" method="post">
+              <select
+                name="organizationId"
+                defaultValue={activeMembership?.organizationId ?? ""}
+                aria-label="Switch organization"
+                onChange={(event) => event.currentTarget.form?.requestSubmit()}
+              >
+                {organizations.map((membership) => (
+                  <option key={membership.id} value={membership.organizationId}>
+                    {membership.organizationName} - {membership.role}
+                  </option>
+                ))}
+              </select>
+            </form>
           </label>
 
           <div className="topbar-actions">

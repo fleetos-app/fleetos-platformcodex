@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { StatusBadge } from "../../../../../modules/jobs-runs/components/status-badge";
 import { StatusTimeline } from "../../../../../modules/jobs-runs/components/timeline";
-import { getJobDetails } from "../../../../../modules/jobs-runs/services/jobs-runs-service";
+import { CreateEditDialog } from "../../../../../modules/jobs-runs/components/create-edit-dialog";
+import { JobForm } from "../../../../../modules/jobs-runs/components/job-form";
+import { getJobDetails, getJobFormOptions } from "../../../../../modules/jobs-runs/services/jobs-runs-service";
 import { getJobsRunsServerContext } from "../../../../../modules/jobs-runs/server";
 
 export default async function JobDetailsPage({
@@ -10,10 +12,13 @@ export default async function JobDetailsPage({
   params: Promise<{ jobId: string }>;
 }) {
   const { jobId } = await params;
-  const { supabase, scope } = await getJobsRunsServerContext();
+  const { supabase, scope } = await getJobsRunsServerContext("jobs.read");
 
   try {
-    const { job, history } = await getJobDetails(supabase, scope, jobId);
+    const [{ job, history }, options] = await Promise.all([
+      getJobDetails(supabase, scope, jobId),
+      getJobFormOptions(supabase, scope),
+    ]);
 
     return (
       <div className="module-page">
@@ -23,7 +28,12 @@ export default async function JobDetailsPage({
             <h1>{job.title}</h1>
             <p>{job.internalReference ?? job.customerReference ?? "No reference"}</p>
           </div>
-          <StatusBadge status={job.status} />
+          <div className="header-actions">
+            <StatusBadge status={job.status} />
+            <CreateEditDialog title="Edit job" description="Update job details through the service layer.">
+              <JobForm mode="edit" job={job} options={options} />
+            </CreateEditDialog>
+          </div>
         </header>
         <section className="detail-grid">
           <Detail label="Customer" value={job.customer?.name ?? "Unassigned"} />
