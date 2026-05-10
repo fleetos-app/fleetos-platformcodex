@@ -43,7 +43,7 @@ export function RunsTable({ result }: { result: PaginatedResult<RunSummary> }) {
         </tbody>
       </table>
       <div className="pagination-meta">
-        Page {result.page} of {result.pageCount} · {result.total} records
+        Page {result.page} of {result.pageCount} - {result.total} records
       </div>
     </div>
   );

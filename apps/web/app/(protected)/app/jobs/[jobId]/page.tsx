@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { FormMessage } from "../../../../../components/form-message";
 import { StatusBadge } from "../../../../../modules/jobs-runs/components/status-badge";
 import { StatusTimeline } from "../../../../../modules/jobs-runs/components/timeline";
 import { CreateEditDialog } from "../../../../../modules/jobs-runs/components/create-edit-dialog";
@@ -8,10 +9,13 @@ import { getJobsRunsServerContext } from "../../../../../modules/jobs-runs/serve
 
 export default async function JobDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ jobId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { jobId } = await params;
+  const query = await searchParams;
   const { supabase, scope } = await getJobsRunsServerContext("jobs.read");
 
   try {
@@ -35,6 +39,7 @@ export default async function JobDetailsPage({
             </CreateEditDialog>
           </div>
         </header>
+        <FormMessage error={readParam(query.error)} message={readParam(query.message)} />
         <section className="detail-grid">
           <Detail label="Customer" value={job.customer?.name ?? "Unassigned"} />
           <Detail label="Pickup" value={job.pickupLocation?.name ?? "TBC"} />
@@ -47,6 +52,10 @@ export default async function JobDetailsPage({
   } catch {
     notFound();
   }
+}
+
+function readParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

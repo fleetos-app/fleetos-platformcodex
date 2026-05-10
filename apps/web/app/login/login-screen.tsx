@@ -1,5 +1,6 @@
 import { getAuthSession } from "@fleetos/auth";
 import { redirect } from "next/navigation";
+import { SubmitButton } from "../../components/submit-button";
 import { createServerSupabaseClient } from "../../lib/supabase/server";
 import { sendMagicLink, signInWithPassword } from "./actions";
 
@@ -64,7 +65,7 @@ export async function LoginScreen({
             <span>Password</span>
             <input name="password" type="password" autoComplete="current-password" required />
           </label>
-          <button type="submit">Sign in</button>
+          <SubmitButton pendingLabel="Signing in...">Sign in</SubmitButton>
         </form>
 
         <form className="auth-link-form" action={sendMagicLink}>
@@ -73,7 +74,7 @@ export async function LoginScreen({
             <span>Magic link</span>
             <input name="email" type="email" autoComplete="email" placeholder="you@example.com" />
           </label>
-          <button type="submit">Email magic link</button>
+          <SubmitButton pendingLabel="Sending...">Email magic link</SubmitButton>
         </form>
       </section>
     </main>

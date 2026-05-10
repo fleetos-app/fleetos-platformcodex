@@ -1,8 +1,15 @@
+import { FormMessage } from "../../../components/form-message";
+import { SubmitButton } from "../../../components/submit-button";
 import { createSupportAccessAction } from "../../../modules/super-admin/actions";
 import { listOrganizations } from "../../../modules/super-admin/repository";
 import { logSuperAdminAudit, requireSuperAdmin } from "../../../modules/super-admin/server";
 
-export default async function AdminSupportPage() {
+export default async function AdminSupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const { context, serviceSupabase } = await requireSuperAdmin();
   const [{ data }, organizations] = await Promise.all([
     serviceSupabase.auth.admin.listUsers({ page: 1, perPage: 200 }),
@@ -20,6 +27,7 @@ export default async function AdminSupportPage() {
         <h1>Support access</h1>
         <p>Support access creates a short-lived audited record. It does not expose service-role keys or bypass server checks.</p>
       </header>
+      <FormMessage error={readParam(params.error)} message={readParam(params.message)} />
       <section className="timeline-card">
         <h2>Create audited support-access session</h2>
         <form className="dialog-form" action={createSupportAccessAction}>
@@ -43,9 +51,13 @@ export default async function AdminSupportPage() {
             <span>Reason</span>
             <textarea name="reason" rows={4} required />
           </label>
-          <button type="submit">Create support access</button>
+          <SubmitButton pendingLabel="Saving...">Create support access</SubmitButton>
         </form>
       </section>
     </div>
   );
+}
+
+function readParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

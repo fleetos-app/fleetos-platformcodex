@@ -192,6 +192,22 @@ a {
   color: var(--success);
 }
 
+.form-message {
+  border-radius: 8px;
+  padding: 11px 13px;
+  font-weight: 800;
+}
+
+.form-message.error {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.form-message.success {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
 .eyebrow {
   margin: 0 0 10px;
   color: var(--text-muted);
@@ -567,6 +583,15 @@ a {
   cursor: pointer;
   font-weight: 800;
   padding: 0 14px;
+}
+
+.primary-button:disabled,
+.dialog-form button:disabled,
+.inline-grid-form button:disabled,
+.auth-form button:disabled,
+.auth-link-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .create-dialog {

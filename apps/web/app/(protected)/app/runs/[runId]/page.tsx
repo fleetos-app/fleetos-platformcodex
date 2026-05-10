@@ -1,21 +1,28 @@
 import { notFound } from "next/navigation";
+import { FormMessage } from "../../../../../components/form-message";
 import { StatusBadge } from "../../../../../modules/jobs-runs/components/status-badge";
 import { StatusTimeline } from "../../../../../modules/jobs-runs/components/timeline";
 import { CreateEditDialog } from "../../../../../modules/jobs-runs/components/create-edit-dialog";
 import { RunForm } from "../../../../../modules/jobs-runs/components/run-form";
-import { getRunDetails } from "../../../../../modules/jobs-runs/services/jobs-runs-service";
+import { getRunDetails, getRunFormOptions } from "../../../../../modules/jobs-runs/services/jobs-runs-service";
 import { getJobsRunsServerContext } from "../../../../../modules/jobs-runs/server";
 
 export default async function RunDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ runId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { runId } = await params;
+  const query = await searchParams;
   const { supabase, scope } = await getJobsRunsServerContext("runs.read");
 
   try {
-    const { run, stops, history } = await getRunDetails(supabase, scope, runId);
+    const [{ run, stops, history }, options] = await Promise.all([
+      getRunDetails(supabase, scope, runId),
+      getRunFormOptions(supabase, scope),
+    ]);
 
     return (
       <div className="module-page">
@@ -28,10 +35,11 @@ export default async function RunDetailsPage({
           <div className="header-actions">
             <StatusBadge status={run.status} />
             <CreateEditDialog title="Edit run" description="Update run details through the service layer.">
-              <RunForm mode="edit" run={run} />
+              <RunForm mode="edit" run={run} options={options} />
             </CreateEditDialog>
           </div>
         </header>
+        <FormMessage error={readParam(query.error)} message={readParam(query.message)} />
         <section className="detail-grid">
           <Detail label="Driver" value={run.driverUserId ?? "Unassigned"} />
           <Detail label="Vehicle" value={run.vehicleId ?? "Unassigned"} />
@@ -56,6 +64,10 @@ export default async function RunDetailsPage({
   } catch {
     notFound();
   }
+}
+
+function readParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

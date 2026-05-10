@@ -1,4 +1,5 @@
 import { CreateEditDialog } from "../../../../modules/jobs-runs/components/create-edit-dialog";
+import { FormMessage } from "../../../../components/form-message";
 import { ModuleToolbar } from "../../../../modules/jobs-runs/components/module-toolbar";
 import { VehicleForm } from "../../../../modules/fleet/components/vehicle-form";
 import { VehiclesTable } from "../../../../modules/fleet/components/vehicles-table";
@@ -15,6 +16,8 @@ export default async function FleetPage({
   const { supabase, scope } = await getFleetServerContext();
   const search = readParam(params.search);
   const status = readParam(params.status);
+  const error = readParam(params.error);
+  const message = readParam(params.message);
   const page = Number(readParam(params.page) ?? 1);
   const result = await listVehicles(supabase, scope, {
     search,
@@ -35,12 +38,12 @@ export default async function FleetPage({
           <VehicleForm mode="create" />
         </CreateEditDialog>
       </header>
+      <FormMessage error={error} message={message} />
       <form action="/app/fleet">
         <ModuleToolbar
           search={search}
           status={status}
           statuses={vehicleStatuses}
-          createLabel="New vehicle"
         />
       </form>
       <VehiclesTable result={result} />

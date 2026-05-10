@@ -1,5 +1,6 @@
 import { logAuthAuditEvent } from "@fleetos/auth";
 import { isFleetOSRole, type FleetOSRole } from "@fleetos/rbac";
+import { createOrFindAuthUser } from "../../lib/supabase/auth-admin";
 import { createServiceSupabaseClient } from "../../lib/supabase/admin";
 import { queryOrganizationMemberships, updateMembershipRole, upsertOrganizationMembership } from "./repository";
 import type { OrganizationUser, UserManagementScope } from "./types";
@@ -55,19 +56,13 @@ export async function createOrInviteOrganizationUser(
   },
 ) {
   const serviceSupabase = createServiceSupabaseClient();
-  const result = input.temporaryPassword
-    ? await serviceSupabase.auth.admin.createUser({
-        email: input.email,
-        password: input.temporaryPassword,
-        email_confirm: true,
-      })
-    : await serviceSupabase.auth.admin.inviteUserByEmail(input.email);
-
-  if (result.error) throw result.error;
-  if (!result.data.user) throw new Error("Supabase did not return a user.");
+  const user = await createOrFindAuthUser(serviceSupabase, {
+    email: input.email,
+    temporaryPassword: input.temporaryPassword,
+  });
 
   const membership = await upsertOrganizationMembership(serviceSupabase, scope, {
-    userId: result.data.user.id,
+    userId: user.id,
     roleKey: input.role,
   });
 

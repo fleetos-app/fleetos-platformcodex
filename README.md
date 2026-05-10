@@ -64,7 +64,7 @@ Demo user after seeding:
 - `admin@fleetos.local`
 - local reset password: `Password123!`
 
-The seed uses `admin@fleetos.local` if it already exists, or creates it for a fresh local reset. For SQL Editor setup and hosted Supabase notes, see [SEEDING.md](SEEDING.md). For schema relationships, see [DATABASE.md](DATABASE.md).
+The seed uses `admin@fleetos.local` if it already exists, or creates it for a fresh local reset. For SQL Editor setup and hosted Supabase notes, see [SEEDING.md](SEEDING.md). For environment setup, see [ENVIRONMENT.md](ENVIRONMENT.md). For schema relationships, see [DATABASE.md](DATABASE.md).
 
 ## Quality Gates
 
@@ -74,6 +74,14 @@ corepack pnpm typecheck
 corepack pnpm test
 corepack pnpm build
 ```
+
+Foundation hardening docs:
+
+- [Foundation checklist](docs/FOUNDATION_CHECKLIST.md)
+- [Foundation audit](docs/FOUNDATION_AUDIT.md)
+- [Production readiness](docs/PRODUCTION_READINESS.md)
+- [Prototype test checklist](docs/PROTOTYPE_TEST_CHECKLIST.md)
+- [Schema contract](docs/SCHEMA_CONTRACT.md)
 
 ## Milestone 1 Scope
 

@@ -54,13 +54,13 @@ function formatTemperature(min: number | null, max: number | null) {
     return "Ambient";
   }
 
-  return `${min ?? "-"}°C to ${max ?? "-"}°C`;
+  return `${min ?? "-"} C to ${max ?? "-"} C`;
 }
 
 function PaginationMeta({ page, pageCount, total }: { page: number; pageCount: number; total: number }) {
   return (
     <div className="pagination-meta">
-      Page {page} of {pageCount} · {total} records
+      Page {page} of {pageCount} - {total} records
     </div>
   );
 }

@@ -9,13 +9,24 @@ corepack pnpm test
 corepack pnpm build
 ```
 
-The web app uses Vitest for core logic tests. Current tests cover Jobs/Runs service validation and super-admin access checks.
+For manual working-prototype smoke testing, follow [docs/PROTOTYPE_TEST_CHECKLIST.md](docs/PROTOTYPE_TEST_CHECKLIST.md).
+
+The web app uses Vitest for core logic and foundation smoke tests. Current tests cover:
+
+- Jobs/Runs service validation
+- super-admin access checks
+- RBAC role boundaries
+- protected route and admin guard static checks
+- service-role leakage checks
+- workspace package cycle checks
+- database foundation and seed idempotency checks
 
 For local manual testing:
 
 1. Start Supabase locally.
 2. Apply migrations and seed data.
 3. Start the app with `corepack pnpm dev`.
-4. Sign in as `owner@fleetos.local` with `FleetOSDemo123!`.
+4. Sign in as `admin@fleetos.local` with `Password123!`.
 5. Visit `/app/dashboard`, `/app/jobs`, `/app/runs`, and `/app/settings`.
-6. Sign in as `superadmin@fleetos.local` with `FleetOSAdmin123!` and visit `/admin/organizations`.
+6. Visit `/admin/organizations`, `/admin/users`, `/admin/billing`, `/admin/support`, and `/admin/system-health`.
+7. Sign out and confirm protected app routes redirect back to `/login`.

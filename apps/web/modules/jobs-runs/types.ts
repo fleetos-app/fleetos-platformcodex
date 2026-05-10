@@ -85,6 +85,9 @@ export interface JobSummary {
   temperatureMinC: number | null;
   temperatureMaxC: number | null;
   podRequired: boolean;
+  driverUserId?: string | null;
+  subcontractorId?: string | null;
+  vehicleId?: string | null;
   customer?: CustomerSummary;
   pickupLocation?: LocationSummary;
   deliveryLocation?: LocationSummary;

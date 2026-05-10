@@ -2,6 +2,7 @@
 
 import { isFleetOSRole } from "@fleetos/rbac";
 import { revalidatePath } from "next/cache";
+import { redirectBackWithError, redirectWithMessage, requireString } from "../../lib/action-feedback";
 import { guardPermission } from "../../lib/auth/server";
 import { createOrInviteOrganizationUser, changeOrganizationUserRole, createUserManagementScope } from "./service";
 
@@ -19,28 +20,40 @@ async function getWriteScope() {
 }
 
 export async function createOrganizationUserAction(formData: FormData) {
-  const scope = await getWriteScope();
-  const role = text(formData.get("role"));
-  if (!isFleetOSRole(role)) throw new Error("Invalid role.");
+  try {
+    const scope = await getWriteScope();
+    const role = text(formData.get("role"));
+    if (!isFleetOSRole(role)) throw new Error("Invalid role.");
 
-  await createOrInviteOrganizationUser(scope, {
-    email: text(formData.get("email")).toLowerCase(),
-    role,
-    temporaryPassword: text(formData.get("temporaryPassword")) || null,
-  });
+    await createOrInviteOrganizationUser(scope, {
+      email: requireString(formData.get("email"), "Email").toLowerCase(),
+      role,
+      temporaryPassword: text(formData.get("temporaryPassword")) || null,
+    });
 
-  revalidatePath("/app/users");
+    revalidatePath("/app/users");
+  } catch (error) {
+    await redirectBackWithError(error, "/app/users");
+  }
+
+  redirectWithMessage("/app/users", "User access saved.");
 }
 
 export async function changeOrganizationUserRoleAction(formData: FormData) {
-  const scope = await getWriteScope();
-  const role = text(formData.get("role"));
-  if (!isFleetOSRole(role)) throw new Error("Invalid role.");
+  try {
+    const scope = await getWriteScope();
+    const role = text(formData.get("role"));
+    if (!isFleetOSRole(role)) throw new Error("Invalid role.");
 
-  await changeOrganizationUserRole(scope, {
-    membershipId: text(formData.get("membershipId")),
-    role,
-  });
+    await changeOrganizationUserRole(scope, {
+      membershipId: requireString(formData.get("membershipId"), "Membership"),
+      role,
+    });
 
-  revalidatePath("/app/users");
+    revalidatePath("/app/users");
+  } catch (error) {
+    await redirectBackWithError(error, "/app/users");
+  }
+
+  redirectWithMessage("/app/users", "User role saved.");
 }

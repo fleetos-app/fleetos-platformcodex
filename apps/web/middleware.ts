@@ -4,19 +4,37 @@ import { createMiddlewareSupabaseClient } from "./lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isLoginPath = pathname === "/login" || pathname.startsWith("/login/");
+  const needsAuthCheck = isProtectedPath(pathname) || isLoginPath;
   const { supabase, response } = createMiddlewareSupabaseClient(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  if (!needsAuthCheck) {
+    return response;
+  }
+
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      user = null;
+    } else {
+      user = data.user;
+    }
+  } catch {
+    user = null;
+  }
 
   if (isProtectedPath(pathname) && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+    if (pathname !== "/login") {
+      redirectUrl.searchParams.set("message", "Please sign in to continue.");
+    }
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (pathname === "/login" || pathname.startsWith("/login/")) {
+  if (isLoginPath) {
     if (!user) {
       return response;
     }

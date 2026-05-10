@@ -24,6 +24,10 @@ function pageCount(total: number, pageSize: number) {
   return Math.max(1, Math.ceil(total / pageSize));
 }
 
+function cleanSearchTerm(value?: string) {
+  return value?.replace(/[,%()]/g, " ").trim();
+}
+
 export async function queryJobs(
   supabase: FleetOSSupabaseClient,
   scope: OperationalScope,
@@ -46,9 +50,10 @@ export async function queryJobs(
     query = query.eq("status", filters.status);
   }
 
-  if (filters.search) {
+  const search = cleanSearchTerm(filters.search);
+  if (search) {
     query = query.or(
-      `title.ilike.%${filters.search}%,customer_reference.ilike.%${filters.search}%,internal_reference.ilike.%${filters.search}%`,
+      `title.ilike.%${search}%,customer_reference.ilike.%${search}%,internal_reference.ilike.%${search}%`,
     );
   }
 
@@ -91,8 +96,9 @@ export async function queryRuns(
     query = query.eq("status", filters.status);
   }
 
-  if (filters.search) {
-    query = query.or(`run_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%`);
+  const search = cleanSearchTerm(filters.search);
+  if (search) {
+    query = query.or(`run_number.ilike.%${search}%,title.ilike.%${search}%`);
   }
 
   const { data, error, count } = await query
@@ -126,6 +132,28 @@ export async function queryJobById(
     .eq("organization_id", scope.organizationId)
     .eq("id", jobId)
     .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function queryLatestJobAllocation(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+  jobId: string,
+) {
+  const { data, error } = await supabase
+    .from("allocations")
+    .select("id,run_id,driver_user_id,subcontractor_id,vehicle_id,status,created_at")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .eq("job_id", jobId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     throw error;
@@ -309,7 +337,8 @@ export async function upsertAllocation(
     return;
   }
 
-  const { error } = await supabase.from("allocations").insert({
+  const latest = await queryLatestJobAllocation(supabase, scope, input.jobId);
+  const payload = {
     tenant_id: scope.tenantId,
     organization_id: scope.organizationId,
     job_id: input.jobId,
@@ -317,9 +346,20 @@ export async function upsertAllocation(
     driver_user_id: input.driverUserId ?? null,
     subcontractor_id: input.subcontractorId ?? null,
     vehicle_id: input.vehicleId ?? null,
-    created_by: scope.actorUserId,
     updated_by: scope.actorUserId,
-  });
+  };
+
+  const { error } = latest
+    ? await supabase
+        .from("allocations")
+        .update(payload)
+        .eq("tenant_id", scope.tenantId)
+        .eq("organization_id", scope.organizationId)
+        .eq("id", latest.id)
+    : await supabase.from("allocations").insert({
+        ...payload,
+        created_by: scope.actorUserId,
+      });
 
   if (error) {
     throw error;
@@ -421,6 +461,52 @@ export async function queryRunOptions(supabase: FleetOSSupabaseClient, scope: Op
     .eq("tenant_id", scope.tenantId)
     .eq("organization_id", scope.organizationId)
     .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function queryDriverOptions(supabase: FleetOSSupabaseClient, scope: OperationalScope) {
+  const { data, error } = await supabase
+    .from("drivers")
+    .select("user_id,display_name,email")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .eq("status", "active")
+    .not("user_id", "is", null)
+    .order("display_name", { ascending: true })
+    .limit(100);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function querySubcontractorUserOptions(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+) {
+  const { data, error } = await supabase
+    .from("organization_memberships")
+    .select("id,user_id,role_key,status")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .eq("role_key", "subcontractor")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function queryVehicleOptions(supabase: FleetOSSupabaseClient, scope: OperationalScope) {
+  const { data, error } = await supabase
+    .from("vehicles")
+    .select("id,registration_number,name,status")
+    .eq("tenant_id", scope.tenantId)
+    .eq("organization_id", scope.organizationId)
+    .order("registration_number", { ascending: true })
     .limit(100);
 
   if (error) throw error;

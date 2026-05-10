@@ -91,7 +91,14 @@ export async function getAuthSession(
   supabase: FleetOSSupabaseClient,
   organizationId?: string,
 ): Promise<AuthSession | null> {
-  const { data, error } = await supabase.auth.getUser();
+  let authResponse: Awaited<ReturnType<typeof supabase.auth.getUser>>;
+  try {
+    authResponse = await supabase.auth.getUser();
+  } catch {
+    return null;
+  }
+
+  const { data, error } = authResponse;
 
   if (error || !data.user) {
     return null;

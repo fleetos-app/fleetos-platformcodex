@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { FleetOSDatabase } from "@fleetos/database";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseServiceEnv } from "../env";

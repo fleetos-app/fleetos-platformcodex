@@ -23,7 +23,7 @@ export default async function SettingsPage() {
           {session.memberships.map((membership) => (
             <li key={membership.id}>
               <strong>{membership.organizationName}</strong>
-              <span>{membership.role} · {membership.status}</span>
+              <span>{membership.role} - {membership.status}</span>
             </li>
           ))}
         </ol>

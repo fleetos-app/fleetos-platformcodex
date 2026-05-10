@@ -32,11 +32,11 @@ export function VehiclesTable({ result }: { result: VehicleListResult }) {
             <tr key={vehicle.id}>
               <td>
                 <strong>{vehicle.registrationNumber}</strong>
-                <small>{vehicle.name}{vehicle.fleetNumber ? ` · ${vehicle.fleetNumber}` : ""}</small>
+                <small>{vehicle.name}{vehicle.fleetNumber ? ` - ${vehicle.fleetNumber}` : ""}</small>
               </td>
               <td><span className={`status-badge tone-${vehicle.status === "maintenance" ? "danger" : vehicle.status === "available" ? "success" : "active"}`}>{vehicle.status}</span></td>
               <td>{vehicle.vehicleType}</td>
-              <td>{vehicle.refrigerated ? `${vehicle.temperatureMinC ?? "-"}°C to ${vehicle.temperatureMaxC ?? "-"}°C` : "Ambient"}</td>
+              <td>{vehicle.refrigerated ? `${vehicle.temperatureMinC ?? "-"} C to ${vehicle.temperatureMaxC ?? "-"} C` : "Ambient"}</td>
               <td>{vehicle.nextServiceDueAt ? new Date(vehicle.nextServiceDueAt).toLocaleDateString() : "Not set"}</td>
               <td>{vehicle.odometerKm?.toLocaleString() ?? "Not set"}</td>
               <td>
@@ -48,7 +48,7 @@ export function VehiclesTable({ result }: { result: VehicleListResult }) {
           ))}
         </tbody>
       </table>
-      <div className="pagination-meta">Page {result.page} of {result.pageCount} · {result.total} records</div>
+      <div className="pagination-meta">Page {result.page} of {result.pageCount} - {result.total} records</div>
     </div>
   );
 }

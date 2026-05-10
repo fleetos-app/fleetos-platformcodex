@@ -1,9 +1,16 @@
+import { FormMessage } from "../../../components/form-message";
+import { SubmitButton } from "../../../components/submit-button";
 import { listOrganizationMemberships } from "../../../modules/super-admin/repository";
 import { createOrInviteUserAction } from "../../../modules/super-admin/actions";
 import { listOrganizations } from "../../../modules/super-admin/repository";
 import { logSuperAdminAudit, requireSuperAdmin } from "../../../modules/super-admin/server";
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const { context, serviceSupabase } = await requireSuperAdmin();
   const [{ data }, memberships, organizations] = await Promise.all([
     serviceSupabase.auth.admin.listUsers({ page: 1, perPage: 200 }),
@@ -23,6 +30,7 @@ export default async function AdminUsersPage() {
         <h1>Users</h1>
         <p>Supabase Auth users and organization memberships for support visibility.</p>
       </header>
+      <FormMessage error={readParam(params.error)} message={readParam(params.message)} />
       <div className="detail-grid">
         <div className="detail-card"><span>Auth users</span><strong>{data.users.length}</strong></div>
         <div className="detail-card"><span>Memberships</span><strong>{memberships.length}</strong></div>
@@ -63,7 +71,7 @@ export default async function AdminUsersPage() {
               </select>
             </label>
           </div>
-          <button type="submit">Create or invite user</button>
+          <SubmitButton pendingLabel="Saving...">Create or invite user</SubmitButton>
         </form>
       </section>
       <div className="data-table-wrap">
@@ -82,4 +90,8 @@ export default async function AdminUsersPage() {
       </div>
     </div>
   );
+}
+
+function readParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

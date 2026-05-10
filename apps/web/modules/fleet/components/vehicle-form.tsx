@@ -1,4 +1,5 @@
 import { createVehicleAction, updateVehicleAction } from "../actions";
+import { SubmitButton } from "../../../components/submit-button";
 import { vehicleStatuses, vehicleTypes, type VehicleSummary } from "../types";
 
 export function VehicleForm({
@@ -69,7 +70,9 @@ export function VehicleForm({
         <span>Notes</span>
         <textarea name="notes" rows={3} defaultValue={vehicle?.notes ?? ""} />
       </label>
-      <button type="submit">{mode === "create" ? "Create vehicle" : "Save vehicle"}</button>
+      <SubmitButton pendingLabel={mode === "create" ? "Creating..." : "Saving..."}>
+        {mode === "create" ? "Create vehicle" : "Save vehicle"}
+      </SubmitButton>
     </form>
   );
 }

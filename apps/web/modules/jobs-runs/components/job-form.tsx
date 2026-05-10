@@ -1,4 +1,5 @@
 import { createJobAction, updateJobAction } from "../actions";
+import { SubmitButton } from "../../../components/submit-button";
 import { jobStatuses, type JobSummary, type SelectOption } from "../types";
 
 export function JobForm({
@@ -13,6 +14,9 @@ export function JobForm({
     pickupLocations: SelectOption[];
     deliveryLocations: SelectOption[];
     runs: SelectOption[];
+    drivers: SelectOption[];
+    subcontractors: SelectOption[];
+    vehicles: SelectOption[];
   };
 }) {
   const action = mode === "create" ? createJobAction : updateJobAction;
@@ -102,17 +106,32 @@ export function JobForm({
       </label>
       <div className="form-grid">
         <label>
-          <span>Driver user ID</span>
-          <input name="driverUserId" placeholder="Optional Supabase user id" />
+          <span>Driver</span>
+          <select name="driverUserId" defaultValue={job?.driverUserId ?? ""}>
+            <option value="">Unassigned</option>
+            {options.drivers.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
         </label>
         <label>
-          <span>Vehicle ID</span>
-          <input name="vehicleId" placeholder="Optional vehicle id" />
+          <span>Vehicle</span>
+          <select name="vehicleId" defaultValue={job?.vehicleId ?? ""}>
+            <option value="">Unassigned</option>
+            {options.vehicles.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
         </label>
       </div>
       <label>
-        <span>Subcontractor membership ID</span>
-        <input name="subcontractorId" placeholder="Optional membership id" />
+        <span>Subcontractor user</span>
+        <select name="subcontractorId" defaultValue={job?.subcontractorId ?? ""}>
+          <option value="">Unassigned</option>
+          {options.subcontractors.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
       </label>
       <label className="checkbox-row">
         <input name="podRequired" type="checkbox" defaultChecked={job?.podRequired ?? false} />
@@ -122,7 +141,9 @@ export function JobForm({
         <span>Notes</span>
         <textarea name="notes" rows={4} defaultValue={job?.notes ?? ""} />
       </label>
-      <button type="submit">{mode === "create" ? "Create job" : "Save job"}</button>
+      <SubmitButton pendingLabel={mode === "create" ? "Creating..." : "Saving..."}>
+        {mode === "create" ? "Create job" : "Save job"}
+      </SubmitButton>
     </form>
   );
 }

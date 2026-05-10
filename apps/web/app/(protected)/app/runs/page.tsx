@@ -1,8 +1,9 @@
 import { CreateEditDialog } from "../../../../modules/jobs-runs/components/create-edit-dialog";
+import { FormMessage } from "../../../../components/form-message";
 import { ModuleToolbar } from "../../../../modules/jobs-runs/components/module-toolbar";
 import { RunForm } from "../../../../modules/jobs-runs/components/run-form";
 import { RunsTable } from "../../../../modules/jobs-runs/components/runs-table";
-import { listRuns } from "../../../../modules/jobs-runs/services/jobs-runs-service";
+import { getRunFormOptions, listRuns } from "../../../../modules/jobs-runs/services/jobs-runs-service";
 import { getJobsRunsServerContext } from "../../../../modules/jobs-runs/server";
 import { runStatuses, type RunStatus } from "../../../../modules/jobs-runs/types";
 
@@ -15,14 +16,19 @@ export default async function RunsPage({
   const { supabase, scope } = await getJobsRunsServerContext("runs.read");
   const search = readParam(params.search);
   const status = readParam(params.status);
+  const error = readParam(params.error);
+  const message = readParam(params.message);
   const page = Number(readParam(params.page) ?? 1);
 
-  const result = await listRuns(supabase, scope, {
-    search,
-    status: isKnownRunStatus(status) ? status : "all",
-    page,
-    pageSize: 25,
-  });
+  const [result, options] = await Promise.all([
+    listRuns(supabase, scope, {
+      search,
+      status: isKnownRunStatus(status) ? status : "all",
+      page,
+      pageSize: 25,
+    }),
+    getRunFormOptions(supabase, scope),
+  ]);
 
   return (
     <div className="module-page">
@@ -36,15 +42,15 @@ export default async function RunsPage({
           title="Create run"
           description="Create a multi-stop-ready run with dispatch, driver, subcontractor, and vehicle assignment fields."
         >
-          <RunForm mode="create" />
+          <RunForm mode="create" options={options} />
         </CreateEditDialog>
       </header>
+      <FormMessage error={error} message={message} />
       <form action="/app/runs">
         <ModuleToolbar
           search={search}
           status={status}
           statuses={runStatuses}
-          createLabel="New run"
         />
       </form>
       <RunsTable result={result} />

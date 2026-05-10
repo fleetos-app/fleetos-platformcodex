@@ -1,12 +1,19 @@
 import { createRunAction, updateRunAction } from "../actions";
-import { runStatuses, type RunSummary } from "../types";
+import { SubmitButton } from "../../../components/submit-button";
+import { runStatuses, type RunSummary, type SelectOption } from "../types";
 
 export function RunForm({
   mode,
   run,
+  options,
 }: {
   mode: "create" | "edit";
   run?: RunSummary;
+  options: {
+    drivers: SelectOption[];
+    subcontractors: SelectOption[];
+    vehicles: SelectOption[];
+  };
 }) {
   const action = mode === "create" ? createRunAction : updateRunAction;
 
@@ -45,23 +52,40 @@ export function RunForm({
       </div>
       <div className="form-grid">
         <label>
-          <span>Driver user ID</span>
-          <input name="driverUserId" defaultValue={run?.driverUserId ?? ""} />
+          <span>Driver</span>
+          <select name="driverUserId" defaultValue={run?.driverUserId ?? ""}>
+            <option value="">Unassigned</option>
+            {options.drivers.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
         </label>
         <label>
-          <span>Vehicle ID</span>
-          <input name="vehicleId" defaultValue={run?.vehicleId ?? ""} />
+          <span>Vehicle</span>
+          <select name="vehicleId" defaultValue={run?.vehicleId ?? ""}>
+            <option value="">Unassigned</option>
+            {options.vehicles.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
         </label>
       </div>
       <label>
-        <span>Subcontractor membership ID</span>
-        <input name="subcontractorId" defaultValue={run?.subcontractorId ?? ""} />
+        <span>Subcontractor user</span>
+        <select name="subcontractorId" defaultValue={run?.subcontractorId ?? ""}>
+          <option value="">Unassigned</option>
+          {options.subcontractors.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
       </label>
       <label>
         <span>Notes</span>
         <textarea name="notes" rows={4} defaultValue={run?.notes ?? ""} />
       </label>
-      <button type="submit">{mode === "create" ? "Create run" : "Save run"}</button>
+      <SubmitButton pendingLabel={mode === "create" ? "Creating..." : "Saving..."}>
+        {mode === "create" ? "Create run" : "Save run"}
+      </SubmitButton>
     </form>
   );
 }

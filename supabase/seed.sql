@@ -23,6 +23,7 @@ declare
   demo_vehicle_2_id uuid := 'b0000000-0000-4000-8000-000000000102';
   demo_driver_id uuid := 'c0000000-0000-4000-8000-000000000101';
   demo_subcontractor_id uuid := 'd0000000-0000-4000-8000-000000000101';
+  seed_audit_log_id uuid := 'e0000000-0000-4000-8000-000000000101';
 begin
   select id
   into admin_user_id
@@ -823,6 +824,7 @@ begin
     metadata = excluded.metadata;
 
   insert into public.audit_logs (
+    id,
     tenant_id,
     organization_id,
     actor_user_id,
@@ -831,11 +833,20 @@ begin
     metadata
   )
   values (
+    seed_audit_log_id,
     demo_tenant_id,
     demo_organization_id,
     admin_user_id,
     'seed.local_development',
     'seed',
     '{"organization":"Jindal Transport","user":"admin@fleetos.local"}'::jsonb
-  );
+  )
+  on conflict (id) do update
+  set
+    tenant_id = excluded.tenant_id,
+    organization_id = excluded.organization_id,
+    actor_user_id = excluded.actor_user_id,
+    action = excluded.action,
+    entity_table = excluded.entity_table,
+    metadata = excluded.metadata;
 end $$;

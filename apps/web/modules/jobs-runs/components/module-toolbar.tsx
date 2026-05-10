@@ -4,12 +4,10 @@ export function ModuleToolbar({
   search,
   status,
   statuses,
-  createLabel,
 }: {
   search?: string;
   status?: string;
   statuses: readonly string[];
-  createLabel: string;
 }) {
   return (
     <div className="module-toolbar">
@@ -25,8 +23,8 @@ export function ModuleToolbar({
           </option>
         ))}
       </select>
-      <button className="primary-button" type="button">
-        {createLabel}
+      <button className="primary-button" type="submit">
+        Apply filters
       </button>
     </div>
   );

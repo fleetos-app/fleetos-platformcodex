@@ -9,12 +9,16 @@ export async function requireSuperAdmin(): Promise<{
   serviceSupabase: ReturnType<typeof createServiceSupabaseClient>;
 }> {
   const userSupabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await userSupabase.auth.getUser();
+  let user = null;
+  try {
+    const { data, error } = await userSupabase.auth.getUser();
+    user = error ? null : data.user;
+  } catch {
+    user = null;
+  }
 
   if (!user) {
-    redirect("/login?next=/admin/organizations");
+    redirect("/login?next=/admin/dashboard");
   }
 
   const serviceSupabase = createServiceSupabaseClient();

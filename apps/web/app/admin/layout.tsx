@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const adminNav = [
+  ["Dashboard", "/admin/dashboard"],
   ["Organizations", "/admin/organizations"],
   ["Users", "/admin/users"],
   ["Billing", "/admin/billing"],

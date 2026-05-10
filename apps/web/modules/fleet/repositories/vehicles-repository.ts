@@ -8,6 +8,10 @@ function paginationRange(page = 1, pageSize = 25) {
   return { page: safePage, pageSize: safePageSize, from, to: from + safePageSize - 1 };
 }
 
+function cleanSearchTerm(value?: string) {
+  return value?.replace(/[,%()]/g, " ").trim();
+}
+
 export async function queryVehicles(
   supabase: FleetOSSupabaseClient,
   scope: FleetScope,
@@ -27,8 +31,9 @@ export async function queryVehicles(
     query = query.eq("status", filters.status);
   }
 
-  if (filters.search) {
-    query = query.or(`registration_number.ilike.%${filters.search}%,fleet_number.ilike.%${filters.search}%,name.ilike.%${filters.search}%`);
+  const search = cleanSearchTerm(filters.search);
+  if (search) {
+    query = query.or(`registration_number.ilike.%${search}%,fleet_number.ilike.%${search}%,name.ilike.%${search}%`);
   }
 
   const { data, error, count } = await query

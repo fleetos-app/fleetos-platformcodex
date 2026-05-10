@@ -1,4 +1,5 @@
 import { CreateEditDialog } from "../../../../modules/jobs-runs/components/create-edit-dialog";
+import { FormMessage } from "../../../../components/form-message";
 import { JobForm } from "../../../../modules/jobs-runs/components/job-form";
 import { JobsTable } from "../../../../modules/jobs-runs/components/jobs-table";
 import { ModuleToolbar } from "../../../../modules/jobs-runs/components/module-toolbar";
@@ -15,6 +16,8 @@ export default async function JobsPage({
   const { supabase, scope } = await getJobsRunsServerContext("jobs.read");
   const search = readParam(params.search);
   const status = readParam(params.status);
+  const error = readParam(params.error);
+  const message = readParam(params.message);
   const page = Number(readParam(params.page) ?? 1);
 
   const [result, options] = await Promise.all([
@@ -42,12 +45,12 @@ export default async function JobsPage({
           <JobForm mode="create" options={options} />
         </CreateEditDialog>
       </header>
+      <FormMessage error={error} message={message} />
       <form action="/app/jobs">
         <ModuleToolbar
           search={search}
           status={status}
           statuses={jobStatuses}
-          createLabel="New job"
         />
       </form>
       <JobsTable result={result} />

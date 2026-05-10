@@ -6,13 +6,17 @@ import {
   insertStatusHistory,
   queryCustomers,
   queryDeliveryLocations,
+  queryDriverOptions,
   queryJobById,
   queryJobs,
+  queryLatestJobAllocation,
   queryPickupLocations,
   queryRunById,
   queryRunOptions,
   queryRuns,
   queryStatusHistory,
+  querySubcontractorUserOptions,
+  queryVehicleOptions,
   updateJob as updateJobRecord,
   updateRun as updateRunRecord,
   upsertAllocation,
@@ -102,9 +106,15 @@ export async function getJobDetails(
     queryJobById(supabase, scope, jobId),
     queryStatusHistory(supabase, scope, "job", jobId),
   ]);
+  const allocation = await queryLatestJobAllocation(supabase, scope, jobId);
 
   return {
-    job: mapJobSummary(job),
+    job: mapJobSummary({
+      ...job,
+      driver_user_id: allocation?.driver_user_id ?? null,
+      subcontractor_id: allocation?.subcontractor_id ?? null,
+      vehicle_id: allocation?.vehicle_id ?? null,
+    }),
     history: history.map(mapStatusHistory),
   };
 }
@@ -265,11 +275,12 @@ export async function getJobFormOptions(
   supabase: FleetOSSupabaseClient,
   scope: OperationalScope,
 ) {
-  const [customers, pickupLocations, deliveryLocations, runs] = await Promise.all([
+  const [customers, pickupLocations, deliveryLocations, runs, assignments] = await Promise.all([
     queryCustomers(supabase, scope),
     queryPickupLocations(supabase, scope),
     queryDeliveryLocations(supabase, scope),
     queryRunOptions(supabase, scope),
+    getAssignmentOptions(supabase, scope),
   ]);
 
   return {
@@ -289,18 +300,50 @@ export async function getJobFormOptions(
       id: row.id,
       label: `${row.run_number} - ${row.title}`,
     })),
+    ...assignments,
+  };
+}
+
+export async function getRunFormOptions(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+) {
+  return getAssignmentOptions(supabase, scope);
+}
+
+async function getAssignmentOptions(
+  supabase: FleetOSSupabaseClient,
+  scope: OperationalScope,
+) {
+  const [drivers, subcontractors, vehicles] = await Promise.all([
+    queryDriverOptions(supabase, scope),
+    querySubcontractorUserOptions(supabase, scope),
+    queryVehicleOptions(supabase, scope),
+  ]);
+
+  return {
+    drivers: drivers.map((row: any): SelectOption => ({
+      id: row.user_id,
+      label: row.email ? `${row.display_name} (${row.email})` : row.display_name,
+    })),
+    subcontractors: subcontractors.map((row: any): SelectOption => ({
+      id: row.id,
+      label: `Subcontractor user ${String(row.user_id).slice(0, 8)}`,
+    })),
+    vehicles: vehicles.map((row: any): SelectOption => ({
+      id: row.id,
+      label: `${row.registration_number} - ${row.name}`,
+    })),
   };
 }
 
 function mapJobSummary(row: any): JobSummary {
-  if (!isJobStatus(row.status)) {
-    throw new Error(`Unknown job status: ${row.status}`);
-  }
+  const status = isJobStatus(row.status) ? row.status : "issue_reported";
 
   return {
     id: row.id,
     title: row.title,
-    status: row.status,
+    status,
     customerReference: row.customer_reference,
     internalReference: row.internal_reference,
     requestedPickupAt: row.requested_pickup_at,
@@ -309,6 +352,9 @@ function mapJobSummary(row: any): JobSummary {
     temperatureMinC: row.temperature_min_c,
     temperatureMaxC: row.temperature_max_c,
     podRequired: row.pod_required,
+    driverUserId: row.driver_user_id ?? null,
+    subcontractorId: row.subcontractor_id ?? null,
+    vehicleId: row.vehicle_id ?? null,
     customer: row.customer
       ? {
           id: row.customer.id,
@@ -323,15 +369,13 @@ function mapJobSummary(row: any): JobSummary {
 }
 
 function mapRunSummary(row: any): RunSummary {
-  if (!isRunStatus(row.status)) {
-    throw new Error(`Unknown run status: ${row.status}`);
-  }
+  const status = isRunStatus(row.status) ? row.status : "planned";
 
   return {
     id: row.id,
     runNumber: row.run_number,
     title: row.title,
-    status: row.status,
+    status,
     plannedStartAt: row.planned_start_at,
     plannedEndAt: row.planned_end_at,
     notes: row.notes,

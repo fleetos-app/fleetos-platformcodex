@@ -1,8 +1,15 @@
+import { FormMessage } from "../../../components/form-message";
+import { SubmitButton } from "../../../components/submit-button";
 import { updatePlanLimitsAction } from "../../../modules/super-admin/actions";
 import { listOrganizations } from "../../../modules/super-admin/repository";
 import { logSuperAdminAudit, requireSuperAdmin } from "../../../modules/super-admin/server";
 
-export default async function AdminBillingPage() {
+export default async function AdminBillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const { context, serviceSupabase } = await requireSuperAdmin();
   const organizations = await listOrganizations(serviceSupabase);
   await logSuperAdminAudit(serviceSupabase, context, {
@@ -16,8 +23,9 @@ export default async function AdminBillingPage() {
       <header className="module-header">
         <p className="module-eyebrow">FleetOS Internal</p>
         <h1>Billing and plan limits</h1>
-        <p>Payment status is a placeholder for Milestone 1. Plan limits are editable and audited.</p>
+        <p>Payment processor integration is intentionally outside V1. Plan limits and billing status are editable and audited.</p>
       </header>
+      <FormMessage error={readParam(params.error)} message={readParam(params.message)} />
       <div className="data-table-wrap">
         <table className="data-table">
           <thead><tr><th>Organization</th><th>Plan</th><th>Billing</th><th>Limits</th><th>Update</th></tr></thead>
@@ -44,7 +52,7 @@ export default async function AdminBillingPage() {
                       <input name="trucks" type="number" defaultValue={limits.trucks ?? 25} aria-label="Truck limit" />
                       <input name="users" type="number" defaultValue={limits.users ?? 10} aria-label="User limit" />
                       <input name="jobsPerMonth" type="number" defaultValue={limits.jobs_per_month ?? 1000} aria-label="Jobs per month" />
-                      <button type="submit">Save</button>
+                      <SubmitButton pendingLabel="Saving...">Save</SubmitButton>
                     </form>
                   </td>
                 </tr>
@@ -55,4 +63,8 @@ export default async function AdminBillingPage() {
       </div>
     </div>
   );
+}
+
+function readParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

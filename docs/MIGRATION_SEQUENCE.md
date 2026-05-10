@@ -2,7 +2,7 @@
 
 This document defines the safest order to rebuild valuable FleetOS/Subbies features into the new FleetOS platform. It is a product and architecture migration plan, not a direct code migration plan.
 
-Do not copy old Lovable code. Use the old repo for workflow discovery, field discovery, and edge-case discovery only.
+Do not copy old generated code. Use the old repo for workflow discovery, field discovery, and edge-case discovery only.
 
 ## Ground Rules
 

@@ -122,4 +122,4 @@ RPC/functions discovered:
 - Put database access in repositories, business logic in services, route/page code in app routes, and reusable UI in components.
 - Add typed permission constants in `packages/rbac`.
 - Use audit logs for create/update/approve/pay/import/public intake actions.
-- Never reuse old Lovable files or component code directly.
+- Never reuse old generated files or component code directly.

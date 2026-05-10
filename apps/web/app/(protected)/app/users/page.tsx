@@ -1,9 +1,16 @@
 import { fleetOSRoles } from "@fleetos/rbac";
+import { FormMessage } from "../../../../components/form-message";
+import { SubmitButton } from "../../../../components/submit-button";
 import { guardPermission } from "../../../../lib/auth/server";
 import { changeOrganizationUserRoleAction, createOrganizationUserAction } from "../../../../modules/user-management/actions";
 import { createUserManagementScope, listOrganizationUsers } from "../../../../modules/user-management/service";
 
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const session = await guardPermission("users.read");
   const scope = createUserManagementScope({
     tenantId: session.activeMembership?.tenantId,
@@ -19,6 +26,7 @@ export default async function UsersPage() {
         <h1>User management</h1>
         <p>Invite staff, drivers, subcontractors, clients, mechanics, and accounts users into this organization.</p>
       </header>
+      <FormMessage error={readParam(params.error)} message={readParam(params.message)} />
       <section className="timeline-card">
         <h2>Invite or create user</h2>
         <form className="dialog-form compact-form" action={createOrganizationUserAction}>
@@ -38,7 +46,7 @@ export default async function UsersPage() {
               {fleetOSRoles.map((role) => <option key={role} value={role}>{role}</option>)}
             </select>
           </label>
-          <button type="submit">Invite user</button>
+          <SubmitButton pendingLabel="Saving...">Invite user</SubmitButton>
         </form>
       </section>
       <div className="data-table-wrap">
@@ -66,7 +74,7 @@ export default async function UsersPage() {
                     <select name="role" defaultValue={user.role} aria-label={`Role for ${user.email}`}>
                       {fleetOSRoles.map((role) => <option key={role} value={role}>{role}</option>)}
                     </select>
-                    <button type="submit">Save</button>
+                    <SubmitButton pendingLabel="Saving...">Save</SubmitButton>
                   </form>
                 </td>
               </tr>
@@ -76,4 +84,8 @@ export default async function UsersPage() {
       </div>
     </div>
   );
+}
+
+function readParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
